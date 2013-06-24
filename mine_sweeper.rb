@@ -7,6 +7,10 @@ require 'yaml'
 
 
 class Board
+  # REV: maybe get rid of size instance variable. 
+  # => might be easier to create the board with the right 
+  # => size and use that to find boundaries later.
+  # => Too many instance vars can be a bit overwhelming at times
   def initialize(input)
     @size = 9 if input == 1
     @size = 16 if input == 2
@@ -28,6 +32,11 @@ class Board
     @board_coord
   end
 
+  # REV: Perhaps it could be good to allow different amount of bomb coords
+  # => maybe with a class var or some input to instantiate that
+  # => can be passed to this method
+  # => could be nice to just set @bomb coord in here
+  # => instead of setting it equal to the value of this
   def bomb_coord
     bomb_coord = []
     until bomb_coord.length == @size + 1
@@ -41,6 +50,8 @@ class Board
   def fringes(coord)
     results = []
     (-1..1).each do |n|
+      # REV: might be nice to split this out to make 
+      # => it easier to understand
       (-1..1).each do |m|
         next if n == 0 && m == 0
         x,y = coord[0] + n, coord[1] + m
@@ -50,6 +61,9 @@ class Board
     results
   end
 
+  # REV: interesting take on setting the numbers!
+  # => I like this strategy of setting them relative to the 
+  # => bombs instead of the moves like me and my pair did.
   def fringe_hash
     all_fringes = []
     @bomb_coord.each do |coord|
@@ -63,6 +77,8 @@ class Board
     all_fringes_hash = Hash[keys.zip(values)]
   end
 
+  # REV: again, I like the way you kept track of everything
+  # => in a way which made the actual move conditions easier
   def empty_coord
     @board_coord - @fringe_hash.keys - @bomb_coord
   end
@@ -81,6 +97,7 @@ class Board
 
   def hidden_board_hash
    hidden_board = []
+   #REV: maybe put this nested block in a helper method
     @size.times do |n|
       row = []
       @size.times do |m|
@@ -104,6 +121,7 @@ class Minesweeper
     @player = Player.new
   end
 
+  # REV: Might be nice to make a helper method
   def play
     print_screen
     input = gets.to_i
@@ -126,7 +144,7 @@ class Minesweeper
     puts "[2] Intermediate"
     puts "[3] quit"
   end
-
+  
   def run
     puts "Reveal (r) or Flag (f) or Save (s) or Load (l)"
     move = @player.move
@@ -167,7 +185,7 @@ class Minesweeper
     end
     @display_board
   end
-
+  
   def change_display_board(coord, move)
     x = coord[0]
     y = coord[1]
@@ -239,10 +257,12 @@ class Minesweeper
     @display_board.flatten.include?("b")
   end
 
+  # REV: Can simplify with File.write(filename, self.to_yaml)
   def save
     File.open('save1.yaml','w'){|f| f << YAML::dump([@board_object, @display_board, @size])}
   end
 
+  # REV: Can simplify with YAML::load_file(filename)
   def load
     object_arrays = YAML::load(File.open('save1.yaml'))
     @board = object_arrays[0].board_hash
@@ -255,7 +275,8 @@ class Minesweeper
 end
 
 class Player
-
+  #REV: I like this short, straightforward class
+  # => does exactly what it needs to and nothing more
   def move
     move = gets.chomp
     if move == 'r' || move == 'f'
