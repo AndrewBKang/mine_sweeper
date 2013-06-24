@@ -1,4 +1,7 @@
 require 'debugger'
+require 'yaml'
+
+
 class Board
   def initialize(input)
     @size = 9 if input == 1
@@ -101,20 +104,12 @@ class Minesweeper
     input = gets.to_i
     input == 1 ? @size = 9 : @size = 16
     unless input == 3
-      @board = Board.new(input).board_hash
-      print "   0  1  2  3  4  5  6  7  8" if @size == 9
-      print "   0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15" if @size == 16
-      print "\n"
-      i = 0
-      initial_display_board.each do |line|
-        i < 10 ? print("#{i}  ") : print("#{i} ")
-        print line.join("  ")
-        print "\n"
-        i += 1
+      @board_object = Board.new(input)
+      @board = @board_object.board_hash
+      show_board(initial_display_board)
+      until win? || lose? || !run
       end
-      until win? || lose?
-        run
-      end
+      puts "saved" if save
       puts "winner!" if win?
       puts "loser!" if lose?
     end
@@ -128,9 +123,22 @@ class Minesweeper
   end
 
   def run
-    puts "Input coordinates and move (eg: 1,2 r)"
-    coord_and_move = @player.move
-    new_board = change_display_board(coord_and_move[0],coord_and_move[1])
+    puts "Reveal (r) or Flag (f) or Save (s) or Load (l)"
+    move = @player.move
+    if move == 's'
+      save
+      false
+    elsif move == 'l'
+      load
+      show_board(@display_board)
+    else
+      coord_and_move = move if move.length == 2
+      new_board = change_display_board(coord_and_move[0],coord_and_move[1])
+      show_board(new_board)
+    end
+  end
+
+  def show_board(new_board)
     print "   0  1  2  3  4  5  6  7  8" if @size == 9
     print "   0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15" if @size == 16
     print "\n"
@@ -223,17 +231,38 @@ class Minesweeper
     @display_board.flatten.include?("b")
   end
 
+  def save
+    File.open('save1.yaml','w'){|f| f << YAML::dump([@player, @board_object, @display_board, @size])}
+  end
+
+  def load
+    object_arrays = YAML::load(File.open('save1.yaml'))
+    @player = object_arrays[0]
+    @board_object = object_arrays[1]
+    @display_board = object_arrays[2]
+    @size = object_arrays[3]
+    true
+  end
+
+
 end
 
 class Player
 
-
   def move
-    coord_and_choice = gets.split(" ")
-    coord = coord_and_choice[0].split(",").map { |s| s.to_i }
-    choice = coord_and_choice[1]
-    [coord, choice]
-  end
+    move = gets.chomp
+    if move == 'r' || move == 'f'
+      puts "Enter coordinates (ex. 1,2)"
+      coord1 = gets.chomp
+      coord = coord1.split(",").map { |s| s.to_i }
+      p [coord, move]
+      return [coord, move]
+    elsif move == 's'
+      's'
+    elsif move == 'l'
+      'l'
+    end
 
+  end
 
 end
