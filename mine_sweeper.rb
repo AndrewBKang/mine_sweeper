@@ -1,5 +1,10 @@
-require 'debugger'
 require 'yaml'
+
+#To play, run:
+#load 'mine_sweeper.rb'
+#game = Minesweeper.new
+#game.play
+
 
 class Board
   def initialize(input)
@@ -74,6 +79,22 @@ class Board
     board_hash
   end
 
+  def hidden_board_hash
+   hidden_board = []
+    @size.times do |n|
+      row = []
+      @size.times do |m|
+        row << ''
+      end
+     hidden_board << row
+    end
+    board_hash.keys.each do |key|
+      x = key[0]
+      y = key[1]
+     hidden_board[x][y] = @board_hash[key].to_s
+    end
+   hidden_board
+  end
 
 end
 
@@ -224,7 +245,7 @@ class Minesweeper
 
   def load
     object_arrays = YAML::load(File.open('save1.yaml'))
-    @board_object = object_arrays[0]
+    @board = object_arrays[0].board_hash
     @display_board = object_arrays[1]
     @size = object_arrays[2]
     true
