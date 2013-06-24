@@ -2,7 +2,7 @@ require 'debugger'
 require 'yaml'
 
 class Board
-  def initialize(input)
+  def initialize(input) #REV: Maybe allow for other sizes? Then again, YAGNI
     @size = 9 if input == 1
     @size = 16 if input == 2
     board_coord
@@ -27,17 +27,21 @@ class Board
     bomb_coord = []
     until bomb_coord.length == @size + 1
       x, y = (0..@size - 1).to_a.shuffle.first, (0..@size - 1).to_a.shuffle.first
+      #REV: Maybe use (0...@size) instead of (0..@size-1)
+      #REV: .sample instead of .shuffle.first
       pos_coord = [x,y]
       bomb_coord << pos_coord unless bomb_coord.include? pos_coord
     end
     bomb_coord
   end
 
+  #REV: So, this takes the coordinates of a mine, and spits out
+  #     a list of adjacent coordinates?
   def fringes(coord)
     results = []
     (-1..1).each do |n|
       (-1..1).each do |m|
-        next if n == 0 && m == 0
+        next if n == 0 && m == 0 #REV: Nice way of checking adjacency
         x,y = coord[0] + n, coord[1] + m
         results << [x,y] if (0..@size - 1).to_a.include?(x) && (0..@size - 1).to_a.include?(y)
       end
@@ -53,7 +57,7 @@ class Board
     keys = all_fringes.uniq - @bomb_coord
     values = []
     keys.each do |key|
-      values << all_fringes.count(key)
+      values << all_fringes.count(key) #REV: Nice.
     end
     all_fringes_hash = Hash[keys.zip(values)]
   end
@@ -61,6 +65,8 @@ class Board
   def empty_coord
     @board_coord - @fringe_hash.keys - @bomb_coord
   end
+
+  #REV: Any particular reason you mix upper- and lower-case?
 
   def board_hash
     board_hash = {}
@@ -73,7 +79,8 @@ class Board
     board_hash = board_hash.merge(@fringe_hash)
     board_hash
   end
-
+  #REV: I really like how you constructed board_hash, neatly partitioning the
+  #     board by the symbols.
 
 end
 
@@ -134,6 +141,8 @@ class Minesweeper
       i += 1
     end
   end
+  #REV: A neater way to do the above might use String::ljust, instead of
+  # =>  breaking it into cases.
 
   def initial_display_board
     @display_board = []
@@ -156,6 +165,8 @@ class Minesweeper
       elsif @display_board[x][y] == 'F'
         @display_board[x][y] = '*'
       end
+      #REV: You might also ensure that the player can't put a flag on an
+      # =>  already revealed square.
     elsif move == 'r'
       reveal(coord)
     end
@@ -167,7 +178,7 @@ class Minesweeper
     x,y = start_coord[0], start_coord[1]
 
     # bomb or number
-    if check == 'b' || check.to_i == check
+    if check == 'b' || check.to_i == check #REV: `check.class == Integer` is a bit more intuitive
       @display_board[x][y] = check
 
     # empty
@@ -197,6 +208,8 @@ class Minesweeper
     end
   end
 
+  #REV: I wonder if you could take the common code between the below method,
+  # =>  and Board#fringes, and make a global helper method? DRY!
   def adj_coords(coord)
     results = []
     (-1..1).each do |n|
@@ -210,6 +223,7 @@ class Minesweeper
   end
 
   def win?
+    #REV: Oh, I forgot about flatten. Perfect.
     spots_left = @display_board.flatten.count('*') + @display_board.flatten.count('F')
     spots_left == 10 && @size == 9 || spots_left == 40 && @size == 16
   end
@@ -220,6 +234,9 @@ class Minesweeper
 
   def save
     File.open('save1.yaml','w'){|f| f << YAML::dump([@board_object, @display_board, @size])}
+    #REV: Why don't you just save board_hash and the most recent new_board?
+    #Since they're basic objects, you could use JSON, which is way simpler than
+    #YAML
   end
 
   def load
@@ -252,3 +269,5 @@ class Player
   end
 
 end
+
+#REV: Nice work!
