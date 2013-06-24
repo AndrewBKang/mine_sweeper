@@ -1,7 +1,6 @@
 require 'debugger'
 require 'yaml'
 
-
 class Board
   def initialize(input)
     @size = 9 if input == 1
@@ -75,22 +74,7 @@ class Board
     board_hash
   end
 
-  def board_display
-    display_board = []
-    @size.times do |n|
-      row = []
-      @size.times do |m|
-        row << ''
-      end
-      display_board << row
-    end
-    board_hash.keys.each do |key|
-      x = key[0]
-      y = key[1]
-      display_board[x][y] = @board_hash[key].to_s
-    end
-    display_board
-  end
+
 end
 
 class Minesweeper
@@ -180,8 +164,7 @@ class Minesweeper
 
   def reveal(start_coord)
     check = @board[start_coord]
-    x = start_coord[0]
-    y = start_coord[1]
+    x,y = start_coord[0], start_coord[1]
 
     # bomb or number
     if check == 'b' || check.to_i == check
@@ -189,24 +172,28 @@ class Minesweeper
 
     # empty
     else
-      @display_board[x][y] = check
-      arr = [start_coord]
-      visited = []
+      reveal_adjacents(x,y,check)
+    end
 
-      until arr.empty?
-        current_coord = arr.shift
-        next if visited.include? current_coord
+  end
 
-        adj_coords(current_coord).each do |adj_coord|
-          x = adj_coord[0]
-          y = adj_coord[1]
-          next unless @display_board[x][y] == '*'
-          arr << adj_coord if @board[adj_coord] == '_'
-          @display_board[x][y] = @board[adj_coord]
-        end
-        visited << current_coord
+  def reveal_adjacents(x, y, check)
+    @display_board[x][y] = check
+    arr = [[x,y]]
+    visited = []
+
+    until arr.empty?
+      current_coord = arr.shift
+      next if visited.include? current_coord
+
+      adj_coords(current_coord).each do |adj_coord|
+        x,y  = adj_coord[0],adj_coord[1]
+        next unless @display_board[x][y] == '*'
+        arr << adj_coord if @board[adj_coord] == '_'
+        @display_board[x][y] = @board[adj_coord]
       end
 
+      visited << current_coord
     end
   end
 
@@ -232,15 +219,14 @@ class Minesweeper
   end
 
   def save
-    File.open('save1.yaml','w'){|f| f << YAML::dump([@player, @board_object, @display_board, @size])}
+    File.open('save1.yaml','w'){|f| f << YAML::dump([@board_object, @display_board, @size])}
   end
 
   def load
     object_arrays = YAML::load(File.open('save1.yaml'))
-    @player = object_arrays[0]
-    @board_object = object_arrays[1]
-    @display_board = object_arrays[2]
-    @size = object_arrays[3]
+    @board_object = object_arrays[0]
+    @display_board = object_arrays[1]
+    @size = object_arrays[2]
     true
   end
 
